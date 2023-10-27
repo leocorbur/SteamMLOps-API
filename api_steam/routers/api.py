@@ -16,14 +16,17 @@ files = ['game_genres.csv', 'genres.csv',
 
 
 # Cargar las partes de play_time.csv y combinarlas en un solo DataFrame
-play_time_parts = []
+'''play_time_parts = []
 for i in range(1, 4):
     play_time_file = f'query_{i}.csv'
     play_time_path = data_folder / play_time_file
     play_time_part = pd.read_csv(play_time_path)
     play_time_parts.append(play_time_part)
 
-play_time_combined = pd.concat(play_time_parts, ignore_index=True)
+play_time_combined = pd.concat(play_time_parts, ignore_index=True)'''
+
+file_path = data_folder/'query_1.csv'
+play_time_combined = pd.read_csv(file_path)
 
 '''# Cargar otros archivos CSV
 for file in files:
