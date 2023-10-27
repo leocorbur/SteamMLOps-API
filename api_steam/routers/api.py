@@ -4,7 +4,7 @@ from pathlib import Path
 
 router = APIRouter()
 
-data_folder = Path('../data_render')
+data_folder = Path('data_render')
 
 
 data = {}
