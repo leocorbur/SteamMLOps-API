@@ -10,7 +10,7 @@ data_folder = Path('data_render')
 data = {}
 
 # Archivos CSV
-files = ['playTimeGenre.csv', 'userGenre.csv','usersRecommend.csv']
+files = ['playTimeGenre.csv', 'userGenre.csv','usersRecommend.csv', 'usersNotRecommend.csv']
 
 
 
@@ -129,16 +129,57 @@ async def get_user_for_genre(Genre: str):
             "error": "No se encontraron datos para el género especificado"
         }
     return response
+
     
 # UsersRecommend( año : int ): Devuelve el top 3 de juegos MÁS recomendados por usuarios para el año dado
 
 @router.get("/top_games/{year}")
-def top_games(year: int):
+async def get_top_games(year: int):
+
     # Agrupa por id_game y cuenta las recomendaciones para cada juego en el año dado
     top_games = data['usersRecommend.csv'].groupby(['name_game', 'year']).size().reset_index(name='recommend_count')
-    # Ordena los juegos por la cantidad de recomendaciones en orden descendente y toma los primeros 3
-    top_3_games = top_games[top_games['year'] == year].nlargest(3, 'recommend_count')
-    top_3_games.reset_index(drop=True, inplace=True)
-    # Formatea el resultado en la estructura deseada
-    result = [{"Puesto {}: {}".format(idx + 1, row['name_game'])} for idx, row in top_3_games.iterrows()]
-    return result
+
+    # Filtra los juegos para el año dado
+    top_games_year = top_games[top_games['year'] == year]
+
+    if not top_games_year.empty:
+        # Ordena los juegos por la cantidad de recomendaciones en orden descendente y toma los primeros 3
+        top_3_games = top_games_year.nlargest(3, 'recommend_count')
+        top_3_games.reset_index(drop=True, inplace=True)
+
+        # Formatea el resultado en la estructura deseada
+        result = [{"Puesto {}: {}".format(idx + 1, row['name_game'])} for idx, row in top_3_games.iterrows()]
+        response = {
+            "Top 3 juegos para el año {}".format(year): result
+        }
+    else:
+        response = {
+            "error": "No se encontraron datos para el año especificado"
+        }
+    return response
+
+# UsersNotRecommend( año : int ): Devuelve el top 3 de juegos MENOS recomendados por usuarios para el año dado
+
+@router.get("/worst_games/{year}")
+async def get_worst_games(year: int):
+
+
+    # Filtra los juegos para el año dado
+    worst_games_year = data['usersNotRecommend.csv'][data['usersNotRecommend.csv']['year'] == year]
+
+    if not worst_games_year.empty:
+        # Ordena los juegos por la cantidad de recomendaciones en orden descendente y toma los primeros 3
+        worst_3_games = worst_games_year.nsmallest(3, 'recommend_count')
+        worst_3_games.reset_index(drop=True, inplace=True)
+
+        # Formatea el resultado en la estructura deseada
+        result = [{"Puesto {}: {}".format(idx + 1, row['name_game'])} for idx, row in worst_3_games.iterrows()]
+        response = {
+            "Top 3 juegos peores del año {}".format(year): result
+        }
+    else:
+        response = {
+            "error": "No se encontraron datos para el año especificado"
+        }
+    return response
+
