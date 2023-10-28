@@ -10,7 +10,7 @@ data_folder = Path('data_render')
 data = {}
 
 # Archivos CSV
-files = ['playTimeGenre.csv', 'userGenre.csv']
+files = ['playTimeGenre.csv', 'userGenre.csv','usersRecommend.csv']
 
 
 
@@ -77,7 +77,7 @@ async def get_anio_mas_horas_by_genre(Genre: str):
             return {"error": "No se encontraron datos para el género especificado"}
     '''
 
-# 01.1 Ruta para obtener el anio con mas horas jugadas de un genre 
+# PlayTimeGenre( genero : str ): Debe devolver año con mas horas jugadas para dicho género.
 
 @router.get("/anio_mas_horas/{Genre}")
 async def get_anio_mas_horas_by_genre(Genre: str):
@@ -97,6 +97,11 @@ async def get_anio_mas_horas_by_genre(Genre: str):
      else:
             return {"error": "No se encontraron datos para el género especificado"}
      
+
+     
+#UserForGenre( genero : str ): Debe devolver el usuario que acumula más horas jugadas 
+#para el género dado y una lista de la acumulación de horas jugadas por año.
+
 @router.get("/user_for_genre/{Genre}")
 async def get_user_for_genre(Genre: str):
 
@@ -125,3 +130,15 @@ async def get_user_for_genre(Genre: str):
         }
     return response
     
+# UsersRecommend( año : int ): Devuelve el top 3 de juegos MÁS recomendados por usuarios para el año dado
+
+@router.get("/top_games/{year}")
+def top_games(year: int):
+    # Agrupa por id_game y cuenta las recomendaciones para cada juego en el año dado
+    top_games = data['usersRecommend.csv'].groupby(['name_game', 'year']).size().reset_index(name='recommend_count')
+    # Ordena los juegos por la cantidad de recomendaciones en orden descendente y toma los primeros 3
+    top_3_games = top_games[top_games['year'] == year].nlargest(3, 'recommend_count')
+    top_3_games.reset_index(drop=True, inplace=True)
+    # Formatea el resultado en la estructura deseada
+    result = [{"Puesto {}: {}".format(idx + 1, row['name_game'])} for idx, row in top_3_games.iterrows()]
+    return result
