@@ -10,7 +10,8 @@ data_folder = Path('data_render')
 data = {}
 
 # Archivos CSV
-files = ['playTimeGenre.csv', 'userGenre.csv','usersRecommend.csv', 'usersNotRecommend.csv']
+files = ['playTimeGenre.csv', 'userGenre.csv',
+         'usersRecommend.csv', 'usersNotRecommend.csv', 'sent_analysis.csv']
 
 
 
@@ -183,3 +184,37 @@ async def get_worst_games(year: int):
         }
     return response
 
+# Sentiment_analysis( año : int ): Según el año de lanzamiento, se devuelve una lista con la cantidad de 
+# registros de reseñas de usuarios que se encuentren categorizados con un análisis de sentimiento.
+
+@router.get("/sentiments_by_year")
+async def sentiments_by_year(year: int):
+
+    # Assuming 'data' is a dictionary containing the DataFrame with key 'sent_analysis.csv'
+    df = data['sent_analysis.csv']
+
+    # Filter the DataFrame based on the specified year and get 'sentiment' column as a list
+    sentiments_by_year = df[df['release year'] == year]['sentiment'].tolist()
+    
+    # Check if there is data for the given year
+    if sentiments_by_year:
+
+        # Count occurrences of each sentiment type
+        positive_count= sentiments_by_year.count('Positive')
+        neutral_count= sentiments_by_year.count('Neutral')
+        negative_count = sentiments_by_year.count('Negative')
+
+        # If no data found for the specified year, return an error message
+        response = {
+            "Negative": negative_count,
+            "Neutral": neutral_count,
+            "Positive": positive_count
+        }
+    else:
+        response = {
+            "error": "No se encontraron datos para el año especificado"
+        }
+
+    return response
+
+     
