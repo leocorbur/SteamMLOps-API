@@ -34,8 +34,8 @@ async def get_play_time_genre(Genre: str):
      filtered_data = df[df['genre'] == Genre]
 
      if not filtered_data.empty:
-            hours_by_year = filtered_data.groupby(filtered_data['anio'])['playtime_forever'].sum()
-            year_with_most_hours = hours_by_year.idxmax()
+        
+            year_with_most_hours = filtered_data['anio'].iloc[-1]
 
             return {
                 f"Año con más horas jugadas para el Género {Genre}": int(year_with_most_hours)
@@ -141,27 +141,23 @@ async def sentiments_by_year(year: int):
     the count of positive, neutral, and negative sentiment categories for user reviews 
     corresponding to that year from the 'sent_analysis.csv' dataset.
     '''
-
     df = data['sent_analysis.csv']
+    filtered_data = df[df['release year'] == year]
 
-    sentiments_by_year = df[df['release year'] == year]['sentiment'].tolist()
-    
-    if sentiments_by_year:
+    sentiments = {
+        "Negative": 0,
+        "Neutral": 0,
+        "Positive": 0
+    }
 
-        positive_count= sentiments_by_year.count('Positive')
-        neutral_count= sentiments_by_year.count('Neutral')
-        negative_count = sentiments_by_year.count('Negative')
+    if filtered_data.empty:
+        return  {
+        "error": f"No se encontraron datos para el año {year}"
+    }
 
-        response = {
-            "Negative": negative_count,
-            "Neutral": neutral_count,
-            "Positive": positive_count
-        }
     else:
-        response = {
-            "error": "No se encontraron datos para el año especificado"
-        }
+        # Calcular la cantidad de sentimientos para el año dado
+        for index, row in filtered_data.iterrows():
+            sentiments[row['sentiment']] += row['recount']
 
-    return response
-
-     
+        return sentiments
