@@ -179,11 +179,13 @@ async def get_recommendations(game_name: str):
     # Cargar el DataFrame de juegos y la matriz de similitud desde archivos
     df = data['gameRecom.csv']
 
-    file_path = Path('data_render') / 'weighted_similarity.pkl.gz'
+    
+    file_path = Path('data_render') / 'weighted_similarity.pkl'
 
-    #with file_path.open('rb') as file:
-    with gzip.open(file_path, 'rb') as file:
+    with file_path.open('rb') as file:
+    #with gzip.open(file_path, 'rb') as file:
         weighted_similarity = pickle.load(file)
+    
 
     # Normalizar el nombre del juego ingresado por el usuario
     user_game = re.sub(r'[^\w\s]', '', game_name.replace('-', ' ')).strip().upper()
@@ -193,6 +195,26 @@ async def get_recommendations(game_name: str):
     if len(game_index) == 0:
         return {"error": "Juego no encontrado"}
     game_index = game_index[0]
+
+
+    '''from sklearn.feature_extraction.text import CountVectorizer
+
+    # Crear un objeto CountVectorizer para convertir texto en una matriz de términos-documentos
+    vectorizer = CountVectorizer(tokenizer=lambda x: x.split(', '))
+    matriz_generos = vectorizer.fit_transform(df['genre_str'])
+
+    # Calcular la similitud de coseno entre los juegos basados en el género
+    from sklearn.metrics.pairwise import cosine_similarity
+    cosine_sim = cosine_similarity(matriz_generos, matriz_generos)
+
+    # Asignar un peso para la similitud de género y para el tiempo de juego
+    genre_weight = 0.7
+    playtime_weight = 0.3
+
+    # Calcular la puntuación de similitud ponderada
+    weighted_similarity = (genre_weight * cosine_sim) + (playtime_weight * df['playtime_normalized'].values.reshape(-1, 1))'''
+
+
 
     # Calcular la similitud de coseno entre el juego del usuario y otros juegos
     similar_games = list(enumerate(weighted_similarity[game_index]))
