@@ -1,6 +1,9 @@
 from fastapi import APIRouter
 import pandas as pd
 from pathlib import Path
+import pickle
+import re
+import gzip
 
 router = APIRouter()
 
@@ -11,7 +14,8 @@ data = {}
 
 # CSV Files
 files = ['playTimeGenre.csv', 'userGenre.csv',
-         'usersRecommend.csv', 'usersNotRecommend.csv', 'sent_analysis.csv']
+         'usersRecommend.csv', 'usersNotRecommend.csv', 
+         'sent_analysis.csv','gameRecom.csv']
 
 
 # Loading files
@@ -161,3 +165,41 @@ async def sentiments_by_year(year: int):
             sentiments[row['sentiment']] += row['recount']
 
         return sentiments
+    
+
+# Game Recommendation
+@router.get("/recommend/")
+async def get_recommendations(game_name: str):
+    """
+    This endpoint takes the name of a game as input and returns the top 10 recommended games 
+    similar to the input game based on user playtime and genre preferences. The recommendations
+    are calculated using a weighted similarity matrix.
+    """
+
+    # Cargar el DataFrame de juegos y la matriz de similitud desde archivos
+    df = data['gameRecom.csv']
+
+    file_path = Path('data_render') / 'weighted_similarity.pkl.gz'
+
+    #with file_path.open('rb') as file:
+    with gzip.open(file_path, 'rb') as file:
+        weighted_similarity = pickle.load(file)
+
+    # Normalizar el nombre del juego ingresado por el usuario
+    user_game = re.sub(r'[^\w\s]', '', game_name.replace('-', ' ')).strip().upper()
+
+    # Obtener el índice del juego ingresado por el usuario en el DataFrame
+    game_index = df[df['name_game'] == user_game].index
+    if len(game_index) == 0:
+        return {"error": "Juego no encontrado"}
+    game_index = game_index[0]
+
+    # Calcular la similitud de coseno entre el juego del usuario y otros juegos
+    similar_games = list(enumerate(weighted_similarity[game_index]))
+    similar_games = sorted(similar_games, key=lambda x: x[1], reverse=True)
+    similar_games = similar_games[1:11]  # Obtener las 10 principales recomendaciones
+    game_indices = [index[0] for index in similar_games]
+    recommendations = df['name_game'].iloc[game_indices].tolist()
+
+    return {"recommendations": recommendations}
+
