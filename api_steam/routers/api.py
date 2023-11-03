@@ -179,7 +179,7 @@ async def get_recommendations(game_name: str):
     This endpoint takes the name of a game as input and returns the top 10 recommended games 
     similar to the input game based on user playtime and genre preferences. The recommendations
     are calculated using a weighted similarity matrix. <br>
-    You can try: COUNTER STRIKE, SOLDIER FRONT 2, WORMS REVOLUTION, GRID AUTOSPORT
+    You can try: COUNTER STRIKE, SOLDIER FRONT 2, WORMS REVOLUTION, GRID AUTOSPORT,
     RAGNAROK ONLINE, DRAGONS AND TITANS, AUDITION ONLINE.
     """
 
