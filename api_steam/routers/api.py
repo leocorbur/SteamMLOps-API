@@ -3,7 +3,6 @@ import pandas as pd
 from pathlib import Path
 import pickle
 import re
-import gzip
 
 router = APIRouter()
 
@@ -30,7 +29,8 @@ for file in files:
 async def get_play_time_genre(Genre: str):
      
      '''This endpoint takes a genre as input and returns the year 
-     with the most played hours for that genre from the 'playTimeGenre.csv' dataset.
+     with the most played hours for that genre from the 'playTimeGenre.csv' dataset.<br>
+     You can try: Action, Anime, Comedy, Drama, Fighting, Gaming.
      '''
      
      df = data['playTimeGenre.csv']
@@ -54,7 +54,8 @@ async def get_user_for_genre(Genre: str):
 
     '''This endpoint takes a genre as input and returns the user 
     with the most played hours for that genre and a list of hours played 
-    by year from the 'userGenre.csv' dataset.
+    by year from the 'userGenre.csv' dataset.<br>
+    You can try: Action, Strategy, Indie, Simulation, Casual, Adventure.
     '''
 
     df = data['userGenre.csv']
@@ -87,7 +88,8 @@ async def get_user_for_genre(Genre: str):
 async def get_top_games(year: int):
 
     '''This endpoint takes a year as input and returns the top 3 most recommended games 
-    by users for that year from the 'usersRecommend.csv' dataset.
+    by users for that year from the 'usersRecommend.csv' dataset.<br>
+    You can try years from 2000 to 2016.
     '''
 
     df = data['usersRecommend.csv']
@@ -115,7 +117,9 @@ async def get_top_games(year: int):
 async def get_worst_games(year: int):
 
     '''This endpoint takes a year as input and returns the top 3 least recommended games by 
-    users for that year from the 'usersNotRecommend.csv' dataset.'''
+    users for that year from the 'usersNotRecommend.csv' dataset.<br>
+    You can try years from 2000 to 2016.
+    '''
 
     df = data['usersNotRecommend.csv']
 
@@ -138,12 +142,13 @@ async def get_worst_games(year: int):
 
 
 
-@router.get("/sentiments_by_year")
-async def sentiments_by_year(year: int):
+@router.get("/sentiments_by_year/{year}")
+async def sentiments_by_release_year(year: int):
 
     '''This endpoint takes a specific release year of games as input and returns 
     the count of positive, neutral, and negative sentiment categories for user reviews 
-    corresponding to that year from the 'sent_analysis.csv' dataset.
+    corresponding to that year from the 'sent_analysis.csv' dataset.<br>
+    You can try release years from 2010 to 2017.
     '''
     df = data['sent_analysis.csv']
     filtered_data = df[df['release year'] == year]
@@ -168,55 +173,34 @@ async def sentiments_by_year(year: int):
     
 
 # Game Recommendation
-@router.get("/recommend/")
+@router.get("/recommend/{game_name}")
 async def get_recommendations(game_name: str):
     """
     This endpoint takes the name of a game as input and returns the top 10 recommended games 
     similar to the input game based on user playtime and genre preferences. The recommendations
-    are calculated using a weighted similarity matrix.
+    are calculated using a weighted similarity matrix. <br>
+    You can try: COUNTER STRIKE, SOLDIER FRONT 2, WORMS REVOLUTION, GRID AUTOSPORT
+    RAGNAROK ONLINE, DRAGONS AND TITANS, AUDITION ONLINE.
     """
 
-    # Cargar el DataFrame de juegos y la matriz de similitud desde archivos
+    # Load game DataFrame and similarity matrix from files
     df = data['gameRecom.csv']
 
-    
     file_path = Path('data_render') / 'weighted_similarity.pkl'
-
     with file_path.open('rb') as file:
-    #with gzip.open(file_path, 'rb') as file:
         weighted_similarity = pickle.load(file)
     
 
-    # Normalizar el nombre del juego ingresado por el usuario
+    # Normalize the user-entered game name
     user_game = re.sub(r'[^\w\s]', '', game_name.replace('-', ' ')).strip().upper()
 
-    # Obtener el índice del juego ingresado por el usuario en el DataFrame
+    # Get the index of the user-entered game in the DataFrame
     game_index = df[df['name_game'] == user_game].index
     if len(game_index) == 0:
         return {"error": "Juego no encontrado"}
     game_index = game_index[0]
 
-
-    '''from sklearn.feature_extraction.text import CountVectorizer
-
-    # Crear un objeto CountVectorizer para convertir texto en una matriz de términos-documentos
-    vectorizer = CountVectorizer(tokenizer=lambda x: x.split(', '))
-    matriz_generos = vectorizer.fit_transform(df['genre_str'])
-
-    # Calcular la similitud de coseno entre los juegos basados en el género
-    from sklearn.metrics.pairwise import cosine_similarity
-    cosine_sim = cosine_similarity(matriz_generos, matriz_generos)
-
-    # Asignar un peso para la similitud de género y para el tiempo de juego
-    genre_weight = 0.7
-    playtime_weight = 0.3
-
-    # Calcular la puntuación de similitud ponderada
-    weighted_similarity = (genre_weight * cosine_sim) + (playtime_weight * df['playtime_normalized'].values.reshape(-1, 1))'''
-
-
-
-    # Calcular la similitud de coseno entre el juego del usuario y otros juegos
+    # Calculate cosine similarity between the user's game and other games
     similar_games = list(enumerate(weighted_similarity[game_index]))
     similar_games = sorted(similar_games, key=lambda x: x[1], reverse=True)
     similar_games = similar_games[1:11]  # Obtener las 10 principales recomendaciones
